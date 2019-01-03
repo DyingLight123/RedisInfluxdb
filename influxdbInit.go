@@ -24,10 +24,10 @@ func ConnInfluxdb(addr string, user string, password string) (client.Client, err
 	return cli, nil
 }
 
-func QueryDB(cli client.Client, cmd string) (res []client.Result, err error) {
+func QueryDB(cli client.Client, cmd string, data string) (res []client.Result, err error) {
 	q := client.Query{
 		Command:  cmd,
-		Database: "test",
+		Database: data,
 	}
 	if response, err := cli.Query(q); err == nil {
 		if response.Error() != nil {
