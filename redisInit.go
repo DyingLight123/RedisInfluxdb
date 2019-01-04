@@ -28,10 +28,10 @@ func ConnRedis(addr string, password string) (*redis.Client, error) {
 
 func AddRedisData(addr string, password string, rediskey string, number int) error {
 	cli, err := ConnRedis(addr, password)
-	defer cli.Close()
 	if err != nil {
 		return err
 	}
+	defer cli.Close()
 
 	_, err = cli.Del(rediskey).Result()
 	if err != nil {

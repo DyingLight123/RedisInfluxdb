@@ -29,13 +29,15 @@ type MapResults struct {
 }
 
 var pause = make(chan string, 1)
+var status int
 
 func (this *RedisInfluxdb) RedisWriteToInfluxdb() error {
 	cli, err := ConnRedis(this.RedisAddr, this.RedisPassword)
-	defer cli.Close()
 	if err != nil {
 		return err
 	}
+	defer cli.Close()
+
 	field, err := cli.HGetAll(this.RedisKey).Result()
 	if err != nil {
 		return err
@@ -53,10 +55,11 @@ func (this *RedisInfluxdb) RedisWriteToInfluxdb() error {
 
 func (this *RedisInfluxdb) GetRedis() (*map[string]string, error) {
 	cli, err := ConnRedis(this.RedisAddr, this.RedisPassword)
-	defer cli.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer cli.Close()
+
 	field, err := cli.HGetAll(this.RedisKey).Result()
 	if err != nil {
 		return nil, err
@@ -65,24 +68,35 @@ func (this *RedisInfluxdb) GetRedis() (*map[string]string, error) {
 }
 
 func (this *RedisInfluxdb) RefreshRedis(number int) {
+	if status == 1 {
+		log.Println("refreshing! please pause! ")
+		return
+	}
+	status = 1
 	c := cron.New()
 	c.AddFunc("@every "+"10s", func() {
 		err := AddRedisData(this.RedisAddr, this.RedisPassword, this.RedisKey, number)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			return
 		}
 		fmt.Println("redis已更新！")
 	})
 	c.Start()
 	<-pause
+	status = 0
 	fmt.Println("continue")
 	c.Stop()
 	//time.AfterFunc(30 * time.Second, c.Stop)
 }
 
-func (this *RedisInfluxdb) PauseRedis() {
+func (this *RedisInfluxdb) PauseRedis() error {
+	if status != 1 {
+		return errors.New("please begin refresh!")
+	}
 	fmt.Println("pause")
 	pause <- "continue"
+	return nil
 }
 
 /*func (this *RedisInfluxdb) RefreshRedis1(number int, pause chan string) {
