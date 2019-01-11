@@ -74,18 +74,18 @@ func (this *RedisInfluxdb) RefreshRedis(number int) {
 	}
 	status = 1
 	c := cron.New()
-	c.AddFunc("@every "+"10s", func() {
+	c.AddFunc("@every "+"30s", func() {
 		err := AddRedisData(this.RedisAddr, this.RedisPassword, this.RedisKey, number)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		fmt.Println("redis已更新！")
+		log.Println("redis已更新！")
 	})
 	c.Start()
 	<-pause
 	status = 0
-	fmt.Println("continue")
+	log.Println("continue")
 	c.Stop()
 	//time.AfterFunc(30 * time.Second, c.Stop)
 }
@@ -94,7 +94,7 @@ func (this *RedisInfluxdb) PauseRedis() error {
 	if status != 1 {
 		return errors.New("please begin refresh!")
 	}
-	fmt.Println("pause")
+	log.Println("pause")
 	pause <- "continue"
 	return nil
 }
